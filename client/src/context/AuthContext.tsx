@@ -138,14 +138,35 @@ export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
    */
   const isTokenValid = useCallback((token: string): boolean => {
     try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
+      const parts = token.split('.');
+      if (parts.length !== 3) {
+        console.error('Invalid token format: expected 3 parts');
+        return false;
+      }
+
+      const payload = JSON.parse(atob(parts[1]));
       const exp = payload.exp;
-      if (!exp) return false;
+
+      if (!exp) {
+        console.error('Token payload missing exp field');
+        return false;
+      }
+
       // Ensure exp is a number before comparison
-      if (typeof exp !== 'number') return false;
+      if (typeof exp !== 'number') {
+        console.error('Token exp field is not a number:', typeof exp);
+        return false;
+      }
+
       // JWT exp is in seconds, Date.now() returns milliseconds, so multiply by 1000
       return Date.now() < exp * 1000;
-    } catch {
+    } catch (err) {
+      // Distinguish between different error types for better debugging
+      if (err instanceof SyntaxError) {
+        console.error('Failed to parse token payload:', err);
+      } else {
+        console.error('Error validating token:', err);
+      }
       return false;
     }
   }, []);
