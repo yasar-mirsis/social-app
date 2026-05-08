@@ -101,8 +101,9 @@ const USER_KEY = 'auth_user';
 
 /**
  * Base API URL - should be configured via environment variable
+ * Vite automatically exposes variables prefixed with VITE_ at build time
  */
-const API_BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL || 'http://localhost:3000/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
 
 /**
  * Custom hook to access AuthContext
@@ -133,13 +134,16 @@ export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
 
   /**
    * Decode JWT token to check expiration
-   * Returns null if token is invalid or expired
+   * Returns false if token is invalid or expired
    */
   const isTokenValid = useCallback((token: string): boolean => {
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
       const exp = payload.exp;
       if (!exp) return false;
+      // Ensure exp is a number before comparison
+      if (typeof exp !== 'number') return false;
+      // JWT exp is in seconds, Date.now() returns milliseconds, so multiply by 1000
       return Date.now() < exp * 1000;
     } catch {
       return false;
@@ -267,9 +271,8 @@ export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
       );
 
       // Registration successful - user is now logged in
-      // Note: The register endpoint returns user data but not a token
-      // We'll need to login after registration or the API should return a token
-      // For now, we'll auto-login after registration
+      // The register endpoint returns user data but not a token, so we make a separate login call
+      // This auto-login after registration provides a seamless user experience
       await login({
         email: credentials.email,
         password: credentials.password,
