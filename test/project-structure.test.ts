@@ -170,6 +170,9 @@ describe('Project Structure Tests', () => {
 
       const content = fs.readFileSync(envExamplePath, 'utf-8');
       assert(content.includes('PORT='), '.env.example should have PORT variable');
+      assert(content.includes('JWT_SECRET='), '.env.example should have JWT_SECRET variable');
+      assert(content.includes('DATABASE_URL='), '.env.example should have DATABASE_URL variable');
+      assert(content.includes('change-this-to-a-strong-random-secret-at-least-32-characters-long'), '.env.example should have secure JWT_SECRET placeholder');
     });
 
     it('should be able to parse all package.json files', () => {
@@ -247,33 +250,86 @@ describe('Project Structure Tests', () => {
     });
   });
 
-  describe('Workspace Structure', () => {
-    it('should have server directory', () => {
-      assert(fs.existsSync(serverDir), 'Server directory should exist');
-      assert(fs.statSync(serverDir).isDirectory(), 'Server path should be a directory');
-    });
+   describe('Workspace Structure', () => {
+     it('should have server directory', () => {
+       assert(fs.existsSync(serverDir), 'Server directory should exist');
+       assert(fs.statSync(serverDir).isDirectory(), 'Server path should be a directory');
+     });
 
-    it('should have client directory', () => {
-      assert(fs.existsSync(clientDir), 'Client directory should exist');
-      assert(fs.statSync(clientDir).isDirectory(), 'Client path should be a directory');
-    });
+     it('should have client directory', () => {
+       assert(fs.existsSync(clientDir), 'Client directory should exist');
+       assert(fs.statSync(clientDir).isDirectory(), 'Client path should be a directory');
+     });
 
-    it('should have server src directory', () => {
-      const serverSrcDir = path.join(serverDir, 'src');
-      assert(fs.existsSync(serverSrcDir), 'Server src directory should exist');
-      assert(fs.statSync(serverSrcDir).isDirectory(), 'Server src path should be a directory');
-    });
+     it('should have server src directory', () => {
+       const serverSrcDir = path.join(serverDir, 'src');
+       assert(fs.existsSync(serverSrcDir), 'Server src directory should exist');
+       assert(fs.statSync(serverSrcDir).isDirectory(), 'Server src path should be a directory');
+     });
 
-    it('should have client src directory', () => {
-      const clientSrcDir = path.join(clientDir, 'src');
-      assert(fs.existsSync(clientSrcDir), 'Client src directory should exist');
-      assert(fs.statSync(clientSrcDir).isDirectory(), 'Client src path should be a directory');
-    });
+     it('should have client src directory', () => {
+       const clientSrcDir = path.join(clientDir, 'src');
+       assert(fs.existsSync(clientSrcDir), 'Client src directory should exist');
+       assert(fs.statSync(clientSrcDir).isDirectory(), 'Client src path should be a directory');
+     });
 
-    it('should have server dist directory (empty)', () => {
-      const serverDistDir = path.join(serverDir, 'dist');
-      assert(fs.existsSync(serverDistDir), 'Server dist directory should exist');
-      assert(fs.statSync(serverDistDir).isDirectory(), 'Server dist path should be a directory');
-    });
-  });
-});
+     it('should have server dist directory (empty)', () => {
+       const serverDistDir = path.join(serverDir, 'dist');
+       assert(fs.existsSync(serverDistDir), 'Server dist directory should exist');
+       assert(fs.statSync(serverDistDir).isDirectory(), 'Server dist path should be a directory');
+     });
+   });
+
+   describe('Server Configuration', () => {
+     it('should have server/src/index.ts using ES6 import syntax', () => {
+       const indexPath = path.join(serverDir, 'src', 'index.ts');
+       assert(fs.existsSync(indexPath), 'Server index.ts should exist');
+
+       const content = fs.readFileSync(indexPath, 'utf-8');
+       assert(content.includes('import express'), 'Server index.ts should use ES6 import for express');
+       assert(content.includes('import cors'), 'Server index.ts should use ES6 import for cors');
+       assert(!content.includes('require('), 'Server index.ts should not use CommonJS require');
+     });
+
+     it('should have server with CORS middleware configured', () => {
+       const indexPath = path.join(serverDir, 'src', 'index.ts');
+       const content = fs.readFileSync(indexPath, 'utf-8');
+       assert(content.includes('app.use(cors('), 'Server index.ts should configure CORS middleware');
+       assert(content.includes('origin'), 'Server CORS configuration should have origin option');
+       assert(content.includes('credentials'), 'Server CORS configuration should have credentials option');
+     });
+
+     it('should have server with environment variable validation', () => {
+       const indexPath = path.join(serverDir, 'src', 'index.ts');
+       const content = fs.readFileSync(indexPath, 'utf-8');
+       assert(content.includes('JWT_SECRET'), 'Server index.ts should validate JWT_SECRET');
+       assert(content.includes('DATABASE_URL'), 'Server index.ts should validate DATABASE_URL');
+       assert(content.includes('process.exit'), 'Server index.ts should exit on validation failure');
+     });
+
+     it('should have server with error handling for startup failures', () => {
+       const indexPath = path.join(serverDir, 'src', 'index.ts');
+       const content = fs.readFileSync(indexPath, 'utf-8');
+       assert(content.includes('server.on'), 'Server index.ts should have error event handler');
+       assert(content.includes('error'), 'Server error handler should handle errors');
+     });
+
+     it('should have server/prisma directory with schema.prisma', () => {
+       const prismaDir = path.join(serverDir, 'prisma');
+       const schemaPath = path.join(prismaDir, 'schema.prisma');
+
+       assert(fs.existsSync(prismaDir), 'Server should have prisma directory');
+       assert(fs.existsSync(schemaPath), 'Server should have schema.prisma file');
+       assert(fs.statSync(prismaDir).isDirectory(), 'prisma should be a directory');
+     });
+
+     it('should have schema.prisma with User, Post, and Message models', () => {
+       const schemaPath = path.join(serverDir, 'prisma', 'schema.prisma');
+       const content = fs.readFileSync(schemaPath, 'utf-8');
+
+       assert(content.includes('model User'), 'schema.prisma should have User model');
+       assert(content.includes('model Post'), 'schema.prisma should have Post model');
+       assert(content.includes('model Message'), 'schema.prisma should have Message model');
+     });
+   });
+ });
