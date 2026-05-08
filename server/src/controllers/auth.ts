@@ -1,20 +1,17 @@
-import { Response } from 'express';
+import { Response, Request } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { db } from '../db';
 import { users } from '../db/schema';
 import { eq } from 'drizzle-orm';
 import { AuthRequest } from '../middleware/auth';
-
-/**
- * Validation regex for email format
- */
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-/**
- * Minimum password length
- */
-const MIN_PASSWORD_LENGTH = 8;
+import {
+  EMAIL_REGEX,
+  MIN_PASSWORD_LENGTH,
+  SPECIAL_CHARACTERS_REGEX,
+  getJwtSecret,
+  getJwtExpiresIn,
+} from '../config';
 
 /**
  * Password complexity validation
@@ -38,7 +35,7 @@ const validatePasswordStrength = (password: string): { valid: boolean; reason?: 
   }
 
   // Check for at least one special character
-  if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+  if (!SPECIAL_CHARACTERS_REGEX.test(password)) {
     return {
       valid: false,
       reason: 'Password must contain at least one special character',
@@ -198,9 +195,9 @@ export const login = async (
         email: user.email,
         name: user.name,
       },
-      process.env.JWT_SECRET!,
+      getJwtSecret(),
       {
-        expiresIn: process.env.JWT_EXPIRES_IN || '7d',
+        expiresIn: getJwtExpiresIn(),
       } as jwt.SignOptions
     );
 
@@ -230,7 +227,7 @@ export const login = async (
  * can be used for server-side logging or token invalidation in the future.
  */
 export const logout = async (
-  _req: AuthRequest,
+  _req: Request,
   res: Response
 ): Promise<void> => {
   try {

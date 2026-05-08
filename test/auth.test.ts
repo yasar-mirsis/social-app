@@ -19,7 +19,8 @@ describe('Authentication Service', () => {
 
   beforeAll(async () => {
     // Set up test environment variables
-    // NOTE: This is a test-only value. In production, JWT_SECRET must be set via environment variable
+    // IMPORTANT: This is a TEST-ONLY fallback value. In production, JWT_SECRET MUST be set
+    // via environment variable with a strong, unique value. Never use this in production.
     process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret-key-for-testing-only';
     process.env.JWT_EXPIRES_IN = '1h';
     process.env.DATABASE_URL = 'postgresql://postgres:postgres@localhost:5432/social_app_test';
