@@ -22,6 +22,12 @@ declare global {
  */
 export const authenticate = (req: Request, res: Response, next: NextFunction): void => {
   try {
+    // Validate JWT_SECRET is configured
+    if (!process.env.JWT_SECRET) {
+      res.status(500).json({ error: 'Server configuration error' });
+      return;
+    }
+
     // Get token from Authorization header
     const authHeader = req.headers.authorization;
 
@@ -33,15 +39,18 @@ export const authenticate = (req: Request, res: Response, next: NextFunction): v
     const token = authHeader.substring(7); // Remove 'Bearer ' prefix
 
     // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as {
-      id: string;
-      email: string;
-    };
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    // Validate decoded token payload structure
+    if (typeof decoded !== 'object' || !decoded || !('id' in decoded) || !('email' in decoded)) {
+      res.status(401).json({ error: 'Invalid token payload' });
+      return;
+    }
 
     // Attach user info to request
     req.user = {
-      id: decoded.id,
-      email: decoded.email,
+      id: decoded.id as string,
+      email: decoded.email as string,
     };
 
     next();

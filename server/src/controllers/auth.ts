@@ -13,11 +13,23 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /**
  * Password validation
- * Ensures minimum password strength
+ * Ensures minimum password strength with complexity requirements
  */
 const validatePassword = (password: string): { valid: boolean; error?: string } => {
   if (password.length < 8) {
     return { valid: false, error: 'Password must be at least 8 characters long' };
+  }
+  if (!/[A-Z]/.test(password)) {
+    return { valid: false, error: 'Password must contain at least one uppercase letter' };
+  }
+  if (!/[a-z]/.test(password)) {
+    return { valid: false, error: 'Password must contain at least one lowercase letter' };
+  }
+  if (!/[0-9]/.test(password)) {
+    return { valid: false, error: 'Password must contain at least one number' };
+  }
+  if (!/[^A-Za-z0-9]/.test(password)) {
+    return { valid: false, error: 'Password must contain at least one special character' };
   }
   return { valid: true };
 };
@@ -27,10 +39,14 @@ const validatePassword = (password: string): { valid: boolean; error?: string } 
  * Creates a signed JWT with user payload
  */
 const generateToken = (userId: string, email: string): string => {
+  if (!process.env.JWT_SECRET) {
+    throw new Error('JWT_SECRET not configured');
+  }
+
   return jwt.sign(
     { id: userId, email },
-    process.env.JWT_SECRET as string,
-    { expiresIn: (process.env.JWT_EXPIRES_IN as string) || '7d' } as any
+    process.env.JWT_SECRET,
+    { expiresIn: '7d' }
   );
 };
 
@@ -97,7 +113,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 
     // Return user data (excluding password)
     res.status(201).json(newUser);
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Registration error:', error);
     res.status(500).json({ error: 'Failed to register user' });
   }
@@ -136,8 +152,10 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     // If user not found or password doesn't match, return generic error
     // This prevents user enumeration attacks
     if (!user) {
-      // Use bcrypt.compare with a dummy hash to prevent timing attacks
-      await bcrypt.compare(password, '$2a$10$dummyHashForTimingAttackPrevention');
+      // Generate a random dummy hash to prevent timing attacks
+      // This ensures consistent timing regardless of whether user exists
+      const dummyHash = await bcrypt.hash('dummy-password-for-timing-attack-prevention', 10);
+      await bcrypt.compare(password, dummyHash);
       res.status(401).json({ error: 'Invalid credentials' });
       return;
     }
@@ -162,7 +180,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
         name: user.name,
       },
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Login error:', error);
     res.status(500).json({ error: 'Failed to login' });
   }
@@ -183,7 +201,7 @@ export const logout = async (_req: Request, res: Response): Promise<void> => {
     // For stateless JWT, logout is handled client-side
     // This endpoint can be used for logging or future session management
     res.status(200).json({});
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Logout error:', error);
     res.status(500).json({ error: 'Failed to logout' });
   }
