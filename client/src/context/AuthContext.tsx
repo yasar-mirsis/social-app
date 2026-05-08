@@ -28,14 +28,21 @@ interface AuthContextType {
 
 /**
  * AuthContext default value
+ * Provides warning when auth functions are called outside AuthProvider
  */
 const AuthContextDefault: AuthContextType = {
   currentUser: null,
   loading: true,
   error: null,
-  login: async () => {},
-  register: async () => {},
-  logout: async () => {},
+  login: async () => {
+    console.warn('AuthContext: login() called outside AuthProvider. Make sure your component is wrapped in AuthProvider.');
+  },
+  register: async () => {
+    console.warn('AuthContext: register() called outside AuthProvider. Make sure your component is wrapped in AuthProvider.');
+  },
+  logout: async () => {
+    console.warn('AuthContext: logout() called outside AuthProvider. Make sure your component is wrapped in AuthProvider.');
+  },
 };
 
 /**
