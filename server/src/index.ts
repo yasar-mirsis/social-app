@@ -5,9 +5,13 @@
 
 import express from 'express';
 import cors from 'cors';
+import authRoutes from './routes/auth';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+
+// Parse JSON request bodies
+app.use(express.json());
 
 // Validate required environment variables
 if (!process.env.JWT_SECRET || process.env.JWT_SECRET === 'change-this-to-a-strong-random-secret-at-least-32-characters-long') {
@@ -29,6 +33,9 @@ app.use(cors({
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', message: 'Server is running' });
 });
+
+// Mount authentication routes
+app.use('/auth', authRoutes);
 
 const server = app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
