@@ -6,6 +6,7 @@
 import express from 'express';
 import cors from 'cors';
 import authRoutes from './routes/auth';
+import userRoutes from './routes/users';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -36,6 +37,9 @@ app.get('/health', (_req, res) => {
 
 // Mount authentication routes
 app.use('/auth', authRoutes);
+
+// Mount user profile routes
+app.use('/users', userRoutes);
 
 const server = app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
