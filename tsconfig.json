@@ -17,3 +17,6 @@
   "include": [],
   "exclude": ["node_modules", "dist", "build"]
 }
+// Note: This is a base TypeScript configuration for workspaces.
+// The include array is intentionally empty - extending configs (server/tsconfig.json, client/tsconfig.json)
+// define their own include patterns for their respective source directories.
