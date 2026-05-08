@@ -17,6 +17,38 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MIN_PASSWORD_LENGTH = 8;
 
 /**
+ * Password complexity validation
+ * Checks for at least one number and one special character
+ */
+const validatePasswordStrength = (password: string): { valid: boolean; reason?: string } => {
+  // Check minimum length
+  if (password.length < MIN_PASSWORD_LENGTH) {
+    return {
+      valid: false,
+      reason: `Password must be at least ${MIN_PASSWORD_LENGTH} characters long`,
+    };
+  }
+
+  // Check for at least one number
+  if (!/\d/.test(password)) {
+    return {
+      valid: false,
+      reason: 'Password must contain at least one number',
+    };
+  }
+
+  // Check for at least one special character
+  if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+    return {
+      valid: false,
+      reason: 'Password must contain at least one special character',
+    };
+  }
+
+  return { valid: true };
+};
+
+/**
  * Register a new user
  * POST /auth/register
  */
@@ -45,10 +77,11 @@ export const register = async (
     }
 
     // Validate password strength
-    if (password.length < MIN_PASSWORD_LENGTH) {
+    const passwordValidation = validatePasswordStrength(password);
+    if (!passwordValidation.valid) {
       res.status(400).json({
         error: 'Password too weak',
-        details: `Password must be at least ${MIN_PASSWORD_LENGTH} characters long`,
+        details: passwordValidation.reason,
       });
       return;
     }

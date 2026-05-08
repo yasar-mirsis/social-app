@@ -19,7 +19,8 @@ describe('Authentication Service', () => {
 
   beforeAll(async () => {
     // Set up test environment variables
-    process.env.JWT_SECRET = 'test-secret-key-for-testing-only';
+    // NOTE: This is a test-only value. In production, JWT_SECRET must be set via environment variable
+    process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret-key-for-testing-only';
     process.env.JWT_EXPIRES_IN = '1h';
     process.env.DATABASE_URL = 'postgresql://postgres:postgres@localhost:5432/social_app_test';
 
@@ -40,7 +41,8 @@ describe('Authentication Service', () => {
     testUser = newUser;
 
     // Generate a test JWT token
-    jwtSecret = process.env.JWT_SECRET!;
+    // JWT_SECRET is guaranteed to be set at this point (see beforeAll above)
+    jwtSecret = process.env.JWT_SECRET || 'test-secret-key-for-testing-only';
     jwtExpiresIn = process.env.JWT_EXPIRES_IN || '7d';
     testToken = jwt.sign(
       {
