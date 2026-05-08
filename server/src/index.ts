@@ -5,6 +5,7 @@
 
 import express from 'express';
 import cors from 'cors';
+import authRoutes from './routes/auth';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -20,12 +21,18 @@ if (!process.env.DATABASE_URL) {
   process.exit(1);
 }
 
-// Configure CORS
+// Middleware
 app.use(cors({
   origin: process.env.CLIENT_URL || 'http://localhost:3000',
   credentials: true
 }));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
+// Routes
+app.use('/auth', authRoutes);
+
+// Health check endpoint
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', message: 'Server is running' });
 });
